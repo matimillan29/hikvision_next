@@ -1,3 +1,34 @@
+> ### Fork con parches de compatibilidad
+>
+> Este es un fork personal de [maciej-or/hikvision_next](https://github.com/maciej-or/hikvision_next),
+> cuyo desarrollo está detenido desde diciembre de 2024. Existe porque necesitaba las
+> correcciones de abajo en mi propia instalación y prefiero tenerlas versionadas antes que
+> como un parche suelto en el disco.
+>
+> **Correcciones respecto de la v1.1.1:**
+>
+> | Problema | Síntoma | Versión de HA |
+> |---|---|---|
+> | `via_device` en `DeviceInfo` | Las entidades de cámara no se registran: *"Camera not found"*. En un NVR de 5 canales sobrevive 1 de 10 | Rompe en **2026.9** |
+> | `entity_id` inválido en los sensores del NVR | Aviso en el log; los sensores de servidor de alarmas y de discos usan el número de serie sin normalizar | Rompe en **2027.2** |
+> | Entidades de snapshot bajo el dominio `camera.` | Aviso en el log; corresponden al dominio `image.` | Rompe en **2027.5** |
+>
+> Las correcciones de `via_device` coinciden en enfoque con los PR
+> [#367](https://github.com/maciej-or/hikvision_next/pull/367) y
+> [#369](https://github.com/maciej-or/hikvision_next/pull/369) del repositorio original,
+> abiertos y sin incorporar.
+>
+> **Sin soporte.** Probado únicamente contra un DS-7616NXI-K2 con firmware V4.83.010 y cinco
+> cámaras IP. No hay compromiso de mantenimiento ni de responder reportes. Si el proyecto
+> original vuelve a moverse, usen ese.
+>
+> **Aviso al actualizar:** la corrección de los `entity_id` cambia el identificador de los
+> sensores de diagnóstico del NVR (servidor de alarmas y discos). Si los tienen en
+> automatizaciones o paneles, revísenlos después de actualizar. Las cámaras, los
+> interruptores de detección y los sensores de eventos no se ven afectados.
+
+---
+
 # Hikvision Next
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/maciej-or/hikvision_next?style=flat-square) [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/hacs/integration)

@@ -105,14 +105,44 @@ class HikvisionDevice(ISAPIClient):
             camera_info = self.get_camera_by_id(camera_id)
             is_ip_camera = isinstance(camera_info, IPCamera)
 
-            return DeviceInfo(
+            device_info = DeviceInfo(
                 manufacturer=self.device_info.manufacturer,
                 identifiers={(DOMAIN, camera_info.serial_no)},
                 model=camera_info.model,
                 name=camera_info.name,
                 sw_version=camera_info.firmware if is_ip_camera else "Unknown",
-                via_device=(DOMAIN, self.device_info.serial_no) if self.device_info.is_nvr else None,
             )
+
+            if self.device_info.is_nvr:
+                self._link_to_nvr(device_info)
+
+            return device_info
+
+    def _link_to_nvr(self, device_info: DeviceInfo) -> None:
+        """Link a camera device to the NVR it belongs to.
+
+        Home Assistant 2026.9 dropped `via_device` from DeviceInfo and the device
+        registry now reports its use with ReportBehavior.ERROR. The key is popped and
+        reported whenever it is *present*, so `via_device=... if ... else None` is not
+        enough - the key has to be absent. Its replacement `via_device_id` takes a
+        registry device id, resolved here with `async_get_device_by_identifier`
+        (`async_get_device` is deprecated the same way). The NVR device is registered in
+        async_setup_entry before the platforms are forwarded, so the lookup finds it.
+        The older spelling is kept for cores before 2026.8, which lack both.
+        """
+        identifier = (DOMAIN, self.device_info.serial_no)
+        registry = dr.async_get(self.hass)
+
+        if not hasattr(registry, "async_get_device_by_identifier"):
+            device_info["via_device"] = identifier
+            return
+
+        if not self.entry:
+            return
+
+        # Without a match the camera device is still created, only unlinked from the NVR.
+        if nvr_device := registry.async_get_device_by_identifier(identifier, self.entry.entry_id):
+            device_info["via_device_id"] = nvr_device.id
 
     def get_device_event_capabilities(
         self,
